@@ -1,0 +1,1862 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Deep Learning Interactive Visualizer | Day 4 Afternoon: Pretrained Foundation Models (BERT & GPT)</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+
+<!-- 1. KaTeX Immediate Render Engine -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.css">
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/katex.min.js"></script>
+<script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.9/dist/contrib/auto-render.min.js"></script>
+
+<!-- 2. MathJax v3 Secondary Engine -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$'], ['\\[', '\\]']],
+    processEscapes: true
+  },
+  options: {
+    skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code']
+  }
+};
+</script>
+<script id="MathJax-script" async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-chtml.js"></script>
+
+<style>
+:root {
+  --bg-base: #f8fafc;
+  --bg-card: #ffffff;
+  --bg-card-subtle: #f1f5f9;
+  --border-color: #e2e8f0;
+  --border-hover: #cbd5e1;
+  --text-main: #0f172a;
+  --text-muted: #64748b;
+  --text-light: #94a3b8;
+
+  --pastel-pink-bg: #fdf2f8;
+  --pastel-pink-border: #fbcfe8;
+  --pastel-pink-text: #db2777;
+
+  --pastel-yellow-bg: #fefce8;
+  --pastel-yellow-border: #fef08a;
+  --pastel-yellow-text: #ca8a04;
+
+  --pastel-green-bg: #f0fdf4;
+  --pastel-green-border: #bbf7d0;
+  --pastel-green-text: #16a34a;
+
+  --pastel-blue-bg: #f0f9ff;
+  --pastel-blue-border: #bae6fd;
+  --pastel-blue-text: #0284c7;
+
+  --pastel-purple-bg: #faf5ff;
+  --pastel-purple-border: #e9d5ff;
+  --pastel-purple-text: #9333ea;
+
+  --primary: #4f46e5;
+  --primary-light: #eef2ff;
+  --primary-dark: #3730a3;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.06), 0 2px 4px -2px rgba(0,0,0,0.04);
+  --radius-lg: 1rem;
+  --radius-md: 0.75rem;
+  --radius-sm: 0.5rem;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  font-family: 'Plus Jakarta Sans', sans-serif;
+  background-color: var(--bg-base);
+  color: var(--text-main);
+  line-height: 1.6;
+  padding: 2rem 1.5rem;
+}
+
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+}
+
+/* Header & Logo */
+.header-card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem 2rem;
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 1.5rem;
+}
+
+.header-left {
+  flex: 1;
+}
+
+.tag-badge {
+  display: inline-block;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  padding: 0.25rem 0.65rem;
+  border-radius: 9999px;
+  background: var(--pastel-blue-bg);
+  color: var(--pastel-blue-text);
+  border: 1px solid var(--pastel-blue-border);
+  margin-bottom: 0.5rem;
+}
+
+.header-title {
+  font-size: 1.75rem;
+  font-weight: 800;
+  color: var(--text-main);
+  letter-spacing: -0.02em;
+}
+
+.header-subtitle {
+  color: var(--text-muted);
+  font-size: 0.95rem;
+  margin-top: 0.25rem;
+}
+
+.logo-img {
+  height: 52px;
+  object-fit: contain;
+}
+
+/* Navigation Tabs */
+.nav-tabs-wrapper {
+  overflow-x: auto;
+  padding-bottom: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.nav-tabs {
+  display: flex;
+  gap: 0.6rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  min-width: max-content;
+}
+
+.nav-btn {
+  background: transparent;
+  border: 1px solid transparent;
+  padding: 0.65rem 1.1rem;
+  border-radius: 0.6rem;
+  font-family: inherit;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.nav-btn:hover {
+  background: #f1f5f9;
+  color: var(--text-main);
+}
+
+.nav-btn.active {
+  background: var(--primary-light);
+  color: var(--primary);
+  border-color: #c7d2fe;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Card System */
+.card {
+  background: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-lg);
+  padding: 1.75rem;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.card-header {
+  margin-bottom: 1.25rem;
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.75rem;
+}
+
+.card-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: var(--text-main);
+}
+
+.card-desc {
+  font-size: 0.88rem;
+  color: var(--text-muted);
+  margin-top: 0.25rem;
+}
+
+/* Math Cards & Typography */
+.math-card {
+  background: #ffffff;
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.5rem;
+  margin: 1.25rem 0;
+  box-shadow: var(--shadow-sm);
+}
+
+.math-title-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 0.75rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid var(--border-color);
+}
+
+.math-title {
+  font-weight: 800;
+  font-size: 1.05rem;
+  color: var(--primary-dark);
+}
+
+.formula-display {
+  background: #ffffff;
+  border: 1.5px solid #c7d2fe;
+  border-radius: 0.75rem;
+  padding: 1.25rem 1rem;
+  text-align: center;
+  font-size: 1.25rem;
+  margin: 1rem 0;
+  overflow-x: auto;
+  box-shadow: 0 2px 4px rgba(79, 70, 229, 0.04);
+}
+
+.math-pill {
+  font-family: 'Fira Code', monospace;
+  font-weight: 600;
+  color: #3730a3;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  padding: 1px 7px;
+  border-radius: 5px;
+  font-size: 0.88em;
+  display: inline-block;
+  line-height: 1.4;
+}
+
+.math-dim {
+  font-family: 'Fira Code', monospace;
+  font-weight: 600;
+  color: #475569;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.86em;
+}
+
+
+/* Step-by-Step Formula Walkthrough Styling */
+.formula-walkthrough {
+  background: #f8fafc;
+  border: 1.5px solid #e2e8f0;
+  border-left: 5px solid var(--primary);
+  border-radius: 0.75rem;
+  padding: 1.25rem 1.5rem;
+  margin-top: 1.25rem;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.03);
+}
+
+.walkthrough-header {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 800;
+  font-size: 1.02rem;
+  color: var(--primary-dark);
+  margin-bottom: 0.85rem;
+  padding-bottom: 0.5rem;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.origin-block {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.85rem 1.15rem;
+  margin-bottom: 1rem;
+}
+
+.origin-title {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #334155;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.origin-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.86rem;
+  line-height: 1.55;
+  color: #334155;
+}
+
+.origin-item {
+  display: flex;
+  align-items: baseline;
+  gap: 0.6rem;
+}
+
+.origin-badge {
+  font-family: 'Fira Code', monospace;
+  font-weight: 700;
+  background: #eef2ff;
+  color: #4338ca;
+  padding: 2px 7px;
+  border-radius: 4px;
+  border: 1px solid #c7d2fe;
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.toy-example-box {
+  background: #fdf4ff;
+  border: 1px solid #f0abfc;
+  border-radius: 0.5rem;
+  padding: 0.85rem 1.15rem;
+  margin-bottom: 1rem;
+}
+
+.toy-title {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #86198f;
+  margin-bottom: 0.5rem;
+  display: flex;
+  align-items: center;
+  gap: 0.4rem;
+}
+
+.step-flow {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.calc-step {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 0.5rem;
+  padding: 0.85rem 1.15rem;
+}
+
+.calc-step-title {
+  font-weight: 700;
+  font-size: 0.88rem;
+  color: #0f172a;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  margin-bottom: 0.4rem;
+}
+
+.step-num-pill {
+  background: #dbeafe;
+  color: #1e40af;
+  font-size: 0.75rem;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 9999px;
+}
+
+.calc-step-body {
+  font-size: 0.86rem;
+  color: #334155;
+  line-height: 1.6;
+}
+
+.calc-math-box {
+  background: #f8fafc;
+  border-radius: 4px;
+  padding: 0.45rem 0.8rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.84rem;
+  color: #0f172a;
+  margin: 0.4rem 0;
+  border-left: 3px solid #6366f1;
+}
+
+.takeaway-box {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  border-left: 4px solid #16a34a;
+  border-radius: 0.5rem;
+  padding: 0.85rem 1.15rem;
+  margin-top: 0.85rem;
+  font-size: 0.88rem;
+  color: #166534;
+  line-height: 1.55;
+}
+
+/* Anatomy Tables */
+.anatomy-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 0.85rem;
+}
+
+.anatomy-table th {
+  background: #f8fafc;
+  color: var(--text-muted);
+  font-weight: 700;
+  text-align: left;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid var(--border-color);
+}
+
+.anatomy-table td {
+  padding: 0.75rem 0.85rem;
+  border: 1px solid var(--border-color);
+  vertical-align: top;
+}
+
+.term-badge {
+  font-family: 'Fira Code', monospace;
+  font-weight: 700;
+  color: #4338ca;
+  background: #e0e7ff;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+}
+
+/* Interactive Components */
+.interactive-panel {
+  background: var(--bg-card-subtle);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin-top: 1rem;
+}
+
+.slider-group {
+  margin-bottom: 1rem;
+}
+
+.slider-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  font-weight: 600;
+  margin-bottom: 0.4rem;
+}
+
+input[type="range"] {
+  width: 100%;
+  accent-color: var(--primary);
+}
+
+.code-box {
+  background: #0f172a;
+  color: #f8fafc;
+  padding: 1rem 1.25rem;
+  border-radius: 0.6rem;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.85rem;
+  line-height: 1.5;
+  overflow-x: auto;
+  margin: 1rem 0;
+}
+
+.grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+@media (max-width: 850px) {
+  .grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+.pill-tag {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 0.2rem 0.55rem;
+  border-radius: 4px;
+  display: inline-block;
+}
+.pill-blue { background: var(--pastel-blue-bg); color: var(--pastel-blue-text); border: 1px solid var(--pastel-blue-border); }
+.pill-green { background: var(--pastel-green-bg); color: var(--pastel-green-text); border: 1px solid var(--pastel-green-border); }
+.pill-purple { background: var(--pastel-purple-bg); color: var(--pastel-purple-text); border: 1px solid var(--pastel-purple-border); }
+.pill-pink { background: var(--pastel-pink-bg); color: var(--pastel-pink-text); border: 1px solid var(--pastel-pink-border); }
+.pill-yellow { background: var(--pastel-yellow-bg); color: var(--pastel-yellow-text); border: 1px solid var(--pastel-yellow-border); }
+
+.tab-content {
+  display: none;
+  animation: fadeIn 0.25s ease;
+}
+
+.tab-content.active {
+  display: block;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Heatmap Grid */
+.attention-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 4px;
+  margin: 1rem 0;
+  max-width: 420px;
+}
+
+.attention-cell {
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: 700;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+}
+
+/* Token Box Styles */
+.token-stream {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 0.75rem 0;
+}
+
+.tok-chip {
+  padding: 4px 10px;
+  border-radius: 6px;
+  font-family: 'Fira Code', monospace;
+  font-size: 0.82rem;
+  font-weight: 600;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.tok-cls { background: #fee2e2; color: #991b1b; border: 1px solid #fca5a5; }
+.tok-sep { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.tok-word { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
+.tok-mask { background: #f3e8ff; color: #6b21a8; border: 1px dashed #d8b4fe; }
+
+.decision-box {
+  background: #f8fafc;
+  border-left: 4px solid var(--primary);
+  padding: 1rem 1.25rem;
+  border-radius: 0 8px 8px 0;
+  margin: 1rem 0;
+}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <div class="header-card">
+    <div class="header-left">
+      <span class="tag-badge">Day 4 Afternoon Session • Deep Learning Masterclass</span>
+      <h1 class="header-title">Pretrained Foundation Models: BERT & GPT</h1>
+      <p class="header-subtitle">Interactive Architecture Explorer: Self-Attention Mechanics, Masked Language Modeling, Autoregressive LLMs & LoRA</p>
+    </div>
+    <div class="header-right">
+      <img src="data:image/png;base64,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" alt="Edulateral Logo" class="logo-img">
+    </div>
+  </div>
+
+  <!-- NAVIGATION TABS -->
+  <div class="nav-tabs-wrapper">
+    <div class="nav-tabs">
+      <button class="nav-btn active" data-tab="tab-attention">⚡ 1. Self-Attention Engine</button>
+      <button class="nav-btn" data-tab="tab-bert">🔍 2. BERT & Bidirectional Encoding</button>
+      <button class="nav-btn" data-tab="tab-gpt">✍️ 3. GPT & Autoregressive LLMs</button>
+      <button class="nav-btn" data-tab="tab-compare">⚔️ 4. BERT vs GPT Head-to-Head</button>
+      <button class="nav-btn" data-tab="tab-lora">🚀 5. Fine-Tuning & LoRA (PEFT)</button>
+    </div>
+  </div>
+
+  <!-- MODULE 1: SELF-ATTENTION & THE TRANSFORMER CORE -->
+  <div id="tab-attention" class="tab-content active">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">⚡ Scaled Dot-Product Attention</div>
+          <div class="card-desc">The core mathematical engine powering all modern Transformers</div>
+        </div>
+        <p>Before Transformers (Vaswani et al., 2017), sequence models processed tokens sequentially from left to right via RNNs, creating severe bottlenecking and vanishing gradients. <strong>Self-Attention</strong> computes direct, pairwise semantic relationships between every word in a sequence simultaneously in <span class="math-dim">O(1)</span> sequential steps.</p>
+        
+        <div class="decision-box">
+          <strong>The 3 Projections:</strong> Every input token embedding <span class="math-pill">\(x_i\)</span> is linearly multiplied by three trained weight matrices:
+          <ul style="margin: 0.5rem 0 0 1.25rem; font-size: 0.88rem;">
+            <li><strong>Query (\(Q\)):</strong> What the current token is looking for.</li>
+            <li><strong>Key (\(K\)):</strong> What the target token contains / offers.</li>
+            <li><strong>Value (\(V\)):</strong> The actual contextual information extracted.</li>
+          </ul>
+        </div>
+
+        <div class="code-box">
+# Minimal PyTorch Self-Attention in 4 lines
+def scaled_dot_product_attention(Q, K, V):
+    scores = torch.matmul(Q, K.transpose(-2, -1)) / math.sqrt(K.size(-1))
+    weights = torch.softmax(scores, dim=-1)
+    return torch.matmul(weights, V), weights
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🎛️ Interactive Attention Weight Heatmap</div>
+          <div class="card-desc">Observe how query tokens attend to context tokens dynamically</div>
+        </div>
+        <div class="interactive-panel">
+          <label style="font-weight:700; font-size:0.85rem;">Select Context Sentence:</label>
+          <select id="attn-sentence-select" style="width:100%; padding:8px; border-radius:6px; border:1px solid #cbd5e1; margin:8px 0 14px 0; font-family:inherit;">
+            <option value="bank_river">"The bank of the river was steep and muddy"</option>
+            <option value="bank_money">"The bank gave a business loan to the startup"</option>
+            <option value="apple_tech">"Apple announced a powerful new neural processor"</option>
+            <option value="apple_fruit">"The red apple fell from the tall tree"</option>
+          </select>
+
+          <div style="font-size:0.85rem; font-weight:700; margin-bottom:4px;">Attention Target for <span style="color:var(--primary);" id="target-word-label">"bank"</span>:</div>
+          <div id="attention-bars" style="display:flex; flex-direction:column; gap:6px;"></div>
+
+          <div id="attn-explanation" style="margin-top:12px; font-size:0.84rem; padding:10px; background:#ffffff; border:1px solid #c7d2fe; border-radius:6px; color:#3730a3;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORMULA 1: SCALED DOT-PRODUCT ATTENTION -->
+    <div class="math-card">
+      <div class="math-title-bar">
+        <div class="math-title">📐 Master Formula: Scaled Dot-Product Attention (Vaswani et al., 2017)</div>
+        <span class="pill-tag pill-blue">Foundational Math</span>
+      </div>
+      <div class="formula-display">
+        $$\text{Attention}(Q, K, V) = \text{softmax}\left( \frac{Q K^T}{\sqrt{d_k}} \right) V$$
+      </div>
+      <table class="anatomy-table">
+        <thead>
+          <tr>
+            <th style="width: 20%;">Mathematical Term</th>
+            <th style="width: 35%;">Definition & Linear Algebra Role</th>
+            <th style="width: 45%;">Operational Purpose in Deep Learning</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="term-badge">\(Q \in \mathbb{R}^{n \times d_k}\)</span></td>
+            <td>Query matrix: Linear projection of the input sequence tokens.</td>
+            <td>Represents the search queries ("What context am I looking for?").</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">\(K^T \in \mathbb{R}^{d_k \times n}\)</span></td>
+            <td>Transposed Key matrix: Linear projection of all candidate tokens.</td>
+            <td>The dot product \(Q K^T\) computes raw pairwise affinity scores between every token pair.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">\(\frac{1}{\sqrt{d_k}}\)</span></td>
+            <td>Scaling factor equal to square root of key projection dimension \(d_k\).</td>
+            <td><strong>Prevents Softmax Saturation:</strong> For large \(d_k\), dot products explode in magnitude, pushing softmax into near-zero gradient regions. Scaling stabilizes variance back to 1.0.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">\(\text{softmax}(\cdot)\)</span></td>
+            <td>Row-wise normalized exponential probability distribution.</td>
+            <td>Converts raw dot-product scores into normalized attention weights summing to 1.0.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">\(V \in \mathbb{R}^{n \times d_v}\)</span></td>
+            <td>Value matrix: Linear projection of information content.</td>
+            <td>Weighted average of value vectors forms the final context-aware output representation.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- STEP-BY-STEP INTUITIVE & NUMERICAL WALKTHROUGH -->
+      <div class="formula-walkthrough">
+        <div class="walkthrough-header">
+          <span>🧩</span>
+          <span>Step-by-Step Mathematical Walkthrough & Intuitive Mechanics</span>
+        </div>
+
+        <div class="origin-block">
+          <div class="origin-title">🔍 Where Did Everything in the Formula Come From?</div>
+          <div class="origin-list">
+            <div class="origin-item">
+              <span class="origin-badge">Q (Query)</span>
+              <span><strong>"What I am searching for":</strong> Generated by multiplying input token vectors by learned weight matrix \(W_Q\). Represents a word actively seeking context (e.g., asking: <em>"Who has attributes related to me?"</em>).</span>
+            </div>
+            <div class="origin-item">
+              <span class="origin-badge">K (Key)</span>
+              <span><strong>"What attributes I have":</strong> Generated by multiplying input tokens by learned matrix \(W_K\). Represents the descriptor/label of candidate words (e.g., broadcasting: <em>"I am a warm temperature descriptor"</em>).</span>
+            </div>
+            <div class="origin-item">
+              <span class="origin-badge">K^T (K Transposed)</span>
+              <span><strong>Matrix Flip:</strong> We transpose the Key matrix so that the dot product \(Q K^T\) computes pairwise alignment scores between every Query vector and all Key vectors in one parallel matrix multiplication.</span>
+            </div>
+            <div class="origin-item">
+              <span class="origin-badge">\(\sqrt{d_k}\) (Scaling Factor)</span>
+              <span><strong>The Variance Stabilizer:</strong> As dimension \(d_k\) increases, dot product magnitudes scale up as \(\mathcal{O}(d_k)\). Dividing by \(\sqrt{d_k}\) scales variance back to 1.0, preventing softmax from pushing into flat, zero-gradient saturation zones.</span>
+            </div>
+            <div class="origin-item">
+              <span class="origin-badge">softmax(&middot;)</span>
+              <span><strong>The Probability Splitter:</strong> Exponentiates and normalizes raw scores so they become non-negative attention weights strictly summing to 1.0 (100% total attention budget).</span>
+            </div>
+            <div class="origin-item">
+              <span class="origin-badge">V (Value)</span>
+              <span><strong>"The Actual Information":</strong> Generated by multiplying input tokens by learned matrix \(W_V\). Once words determine their mutual relevance via \(Q K^T\), they take a weighted blend of these Value vectors to build contextualized representations.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="toy-example-box">
+          <div class="toy-title">🎯 Concrete Numerical Toy Example: "Hot sun"</div>
+          <p style="font-size:0.86rem; color:#701a75; line-height:1.5; margin:0;">
+            Let us trace how the word <strong>"sun"</strong> gathers context from the word <strong>"Hot"</strong> and itself with projection dimension \(d_k = 4 \implies \sqrt{d_k} = \sqrt{4} = 2\):<br>
+            &bull; <strong>"Hot"</strong> has Key \(K_{	ext{Hot}} = [2, 2, 0, 0]\) and Value \(V_{	ext{Hot}} = [10, 0]\) (Semantic meaning: <em>"Heat & Energy"</em>)<br>
+            &bull; <strong>"sun"</strong> has Query \(Q_{	ext{sun}} = [2, 1, 0, 0]\), Key \(K_{	ext{sun}} = [0, 2, 0, 0]\), and Value \(V_{	ext{sun}} = [0, 10]\) (Semantic meaning: <em>"Bright Celestial Body"</em>)
+          </p>
+        </div>
+
+        <div class="step-flow">
+          <div class="calc-step">
+            <div class="calc-step-title"><span class="step-num-pill">Step 1</span> Compute Raw Pairwise Matching Scores (\(Q K^T\))</div>
+            <div class="calc-step-body">
+              Multiply "sun's" Query against each word's Key via dot products:
+              <div class="calc-math-box">
+                Match with "Hot": (2 &times; 2) + (1 &times; 2) + (0 &times; 0) + (0 &times; 0) = 4 + 2 = 6<br>
+                Match with "sun": (2 &times; 0) + (1 &times; 2) + (0 &times; 0) + (0 &times; 0) = 0 + 2 = 2
+              </div>
+              Raw unscaled attention scores: <code>[6, 2]</code>
+            </div>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-title"><span class="step-num-pill">Step 2</span> Scale by \(\sqrt{d_k} = 2\)</div>
+            <div class="calc-step-body">
+              Scale scores down by \(\sqrt{d_k} = 2\) to prevent softmax gradient vanishing:
+              <div class="calc-math-box">
+                Score for "Hot": 6 &divide; 2 = 3<br>
+                Score for "sun": 2 &divide; 2 = 1
+              </div>
+              Scaled attention scores: <code>[3, 1]</code>
+            </div>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-title"><span class="step-num-pill">Step 3</span> Apply Softmax Normalization</div>
+            <div class="calc-step-body">
+              Convert scaled scores into normalized probability distribution using natural exponents \(e^3 pprox 20.085\) and \(e^1 pprox 2.718\) (Sum \(pprox 22.803\)):
+              <div class="calc-math-box">
+                Attention Weight for "Hot": 20.085 &divide; 22.803 &asymp; 0.88 (88% attention)<br>
+                Attention Weight for "sun": 2.718 &divide; 22.803 &asymp; 0.12 (12% attention)
+              </div>
+              Attention weight vector: <code>[0.88, 0.12]</code> (sums to exactly 1.0)
+            </div>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-title"><span class="step-num-pill">Step 4</span> Weighted Sum of Value Vectors (\(	imes V\))</div>
+            <div class="calc-step-body">
+              Multiply each word's Value vector by its attention weight and sum together:
+              <div class="calc-math-box">
+                From "Hot": 0.88 &times; [10, 0] = [8.8, 0.0]<br>
+                From "sun": 0.12 &times; [0, 10] = [0.0, 1.2]<br>
+                Final Contextual Vector: [8.8, 0.0] + [0.0, 1.2] = [8.8, 1.2]
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="takeaway-box">
+          <strong>💡 Final Semantic Transformation:</strong> Prior to self-attention, "sun" was just an isolated token <code>[0, 10]</code>. After attention, "sun" incorporated 88% thermal information from "Hot", producing the blended contextualized vector <code>[8.8, 1.2]</code> — representing a <em>"hot, bright sun"</em>!
+        </div>
+      </div>
+
+    </div>
+
+    <!-- FORMULA 2: MULTI-HEAD ATTENTION -->
+    <div class="math-card">
+      <div class="math-title-bar">
+        <div class="math-title">📐 Master Formula: Multi-Head Attention (MHA)</div>
+        <span class="pill-tag pill-purple">Parallel Representation</span>
+      </div>
+      <div class="formula-display">
+        $$\text{MHA}(Q, K, V) = \text{Concat}(\text{head}_1, \text{head}_2, \dots, \text{head}_h) W^O \quad \text{where} \quad \text{head}_i = \text{Attention}(Q W_i^Q, K W_i^K, V W_i^V)$$
+      </div>
+      <table class="anatomy-table">
+        <thead>
+          <tr>
+            <th style="width: 22%;">Formula Component</th>
+            <th style="width: 35%;">Mechanics</th>
+            <th style="width: 43%;">Why Multi-Head Outperforms Single Head</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="term-badge">\(\text{head}_i\)</span></td>
+            <td>Individual attention projection head running in dimension \(d_k = d_{model} / h\).</td>
+            <td>Allows the network to attend to information from different representation subspaces simultaneously (e.g., Head 1 tracks syntax, Head 2 tracks coreference).</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">\(W_i^Q, W_i^K, W_i^V\)</span></td>
+            <td>Learned linear projection parameter matrices per head.</td>
+            <td>Projects \(d_{model}\) dimensional inputs into specialized subspace representations.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">\(\text{Concat}(\dots) W^O\)</span></td>
+            <td>Concatenation of all \(h\) head outputs followed by output projection \(W^O\).</td>
+            <td>Integrates multi-perspective contextual signals back into the standard model dimension \(d_{model}\).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODULE 2: BERT (BIDIRECTIONAL ENCODER) -->
+  <div id="tab-bert" class="tab-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🔍 BERT: Bidirectional Encoder Representations</div>
+          <div class="card-desc">Deep bidirectional context understanding pioneered by Google (Devlin et al., 2018)</div>
+        </div>
+        <p>Unlike unidirectional models that read text strictly left-to-right, <strong>BERT</strong> is an <strong>Encoder-Only</strong> architecture that conditions simultaneously on both left and right context in all layers. It reads the full sentence holistically, making it exceptionally powerful for text classification, question answering, and NER.</p>
+
+        <div class="decision-box">
+          <strong>The 3-Embedding Input Representation:</strong>
+          <p style="font-size:0.86rem; margin-top:4px;">Every input token to BERT receives the exact sum of three distinct embedding vectors:</p>
+          <div style="font-size:0.86rem; margin-top:6px; font-family:'Fira Code', monospace; color:#1e40af;">
+            Input Embedding = Token_Embed + Segment_Embed + Position_Embed
+          </div>
+        </div>
+
+        <div class="code-box">
+# The 3-Line Hugging Face BERT Classifier
+from transformers import pipeline
+classifier = pipeline("sentiment-analysis", model="distilbert-base-uncased")
+result = classifier("Deep learning with transformers is amazingly powerful!")
+print(result) # [{'label': 'POSITIVE', 'score': 0.9998}]
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🔤 Interactive BERT Tokenizer & 3-Embedding Inspector</div>
+          <div class="card-desc">Type two sentences to inspect [CLS], [SEP], token IDs, and segment IDs</div>
+        </div>
+        <div class="interactive-panel">
+          <div style="margin-bottom:8px;">
+            <label style="font-size:0.8rem; font-weight:700;">Sentence A:</label>
+            <input type="text" id="bert-input-a" value="Deep learning transforms AI" style="width:100%; padding:6px 10px; border-radius:6px; border:1px solid #cbd5e1; font-family:inherit; font-size:0.85rem;">
+          </div>
+          <div style="margin-bottom:12px;">
+            <label style="font-size:0.8rem; font-weight:700;">Sentence B (Optional):</label>
+            <input type="text" id="bert-input-b" value="It powers modern LLMs" style="width:100%; padding:6px 10px; border-radius:6px; border:1px solid #cbd5e1; font-family:inherit; font-size:0.85rem;">
+          </div>
+          <button id="btn-tokenize" style="background:var(--primary); color:white; border:none; padding:6px 14px; border-radius:6px; font-weight:600; cursor:pointer;">⚡ Build BERT Embeddings</button>
+
+          <div style="margin-top:14px;">
+            <div style="font-size:0.85rem; font-weight:700; margin-bottom:6px;">Resulting Token Sequence:</div>
+            <div id="bert-tokens-display" class="token-stream"></div>
+          </div>
+
+          <div style="margin-top:10px; font-size:0.8rem; background:#ffffff; border:1px solid #e2e8f0; border-radius:6px; padding:10px;" id="bert-meta-display"></div>
+        </div>
+      </div>
+    </div>
+
+    
+    <!-- BERT 3-EMBEDDING INPUT FORMULA -->
+    <div class="math-card">
+      <div class="math-title-bar">
+        <div class="math-title">📐 Master Formula: BERT 3-Embedding Input Representation</div>
+        <span class="pill-tag pill-blue">Input Vector Summation</span>
+      </div>
+      <div class="formula-display">
+        $$E_{\text{input}}(x_i) = E_{\text{token}}(w_i) + E_{\text{segment}}(s_i) + E_{\text{position}}(p_i)$$
+      </div>
+      <table class="anatomy-table">
+        <thead>
+          <tr>
+            <th style="width: 25%;">Embedding Vector</th>
+            <th style="width: 35%;">Dimension & Lookup Mechanism</th>
+            <th style="width: 40%;">Operational Function in Bidirectional Processing</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="term-badge">\(E_{\text{token}}(w_i) \in \mathbb{R}^{d_{model}}\)</span></td>
+            <td>WordPiece subword vocabulary lookup (30,522 tokens).</td>
+            <td>Encodes atomic lexical semantic identity. Subwords eliminate Out-Of-Vocabulary (OOV) errors.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">\(E_{\text{segment}}(s_i) \in \mathbb{R}^{d_{model}}\)</span></td>
+            <td>Binary learned segment indicator vector (\(s_i \in \{0, 1\}\)).</td>
+            <td>Distinguishes Sentence A from Sentence B during cross-sentence tasks like QA and NLI.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">\(E_{\text{position}}(p_i) \in \mathbb{R}^{d_{model}}\)</span></td>
+            <td>Learned spatial position embedding vector (\(p_i \in [0, 511]\)).</td>
+            <td>Injects deterministic sequence order, compensating for the Transformer's natural permutation invariance.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- BERT PRETRAINING: MLM & NSP FORMULA -->
+    <div class="math-card">
+      <div class="math-title-bar">
+        <div class="math-title">📐 Master Formula: Masked Language Model (MLM) Objective</div>
+        <span class="pill-tag pill-green">Self-Supervised Pretraining</span>
+      </div>
+      <div class="formula-display">
+        $$\mathcal{L}_{MLM}(\theta) = -\sum_{i \in \text{Masked}} \log P(x_i \mid \tilde{X}; \theta) \quad \text{subject to the 80/10/10 Rule}$$
+      </div>
+      <table class="anatomy-table">
+        <thead>
+          <tr>
+            <th style="width: 25%;">Component / Rule</th>
+            <th style="width: 35%;">Mechanics</th>
+            <th style="width: 40%;">Why It Prevents Training Degradation</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="term-badge">80% [MASK] Tokens</span></td>
+            <td>Selected token is replaced by the literal special token <code>[MASK]</code>.</td>
+            <td>Forces BERT to infer masked semantics strictly from surrounding bilateral context.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">10% Random Tokens</span></td>
+            <td>Selected token is replaced by an arbitrary random word from the dictionary.</td>
+            <td>Forces the network to maintain continuous contextual vigilance: it cannot assume every unmasked token is correct.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">10% Unchanged Tokens</span></td>
+            <td>Selected token is kept completely unaltered.</td>
+            <td>Prevents representation bias toward <code>[MASK]</code> tokens, ensuring representations remain faithful to real tokens during downstream fine-tuning.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">Next Sentence Prediction (NSP)</span></td>
+            <td>Binary classification on <code>[CLS]</code> token: Is Sentence B the actual subsequent sentence?</td>
+            <td>Teaches BERT cross-sentence relational coherence essential for QA and natural language inference (NLI).</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- BERT FAMILY COMPARISON -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🌳 The BERT Evolution Family Tree</div>
+        <div class="card-desc">Key engineering improvements across RoBERTa, ALBERT, and DistilBERT</div>
+      </div>
+      <table class="anatomy-table">
+        <thead>
+          <tr>
+            <th style="width: 20%;">Model</th>
+            <th style="width: 25%;">Architectural Innovation</th>
+            <th style="width: 25%;">Efficiency / Parameter Footprint</th>
+            <th style="width: 30%;">Ideal Production Deployment</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="term-badge">BERT-Base</span></td>
+            <td>Original 12 layers, 768 hidden, 12 heads, static masking, MLM + NSP.</td>
+            <td>110M Parameters (440 MB VRAM)</td>
+            <td>Historical standard baseline; general-purpose NLP.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">RoBERTa (Meta)</span></td>
+            <td>Dynamic masking, removes NSP entirely, trained on 10x larger corpus with larger mini-batches.</td>
+            <td>125M Parameters</td>
+            <td>State-of-the-art enterprise classification and document extraction.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">DistilBERT (HF)</span></td>
+            <td>Knowledge distillation from BERT: 6 layers, removes token-type embeddings.</td>
+            <td>66M Parameters (40% smaller, 60% faster, 97% performance)</td>
+            <td><strong>Latency-critical microservices, edge devices, and real-time APIs.</strong></td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">ALBERT (Google)</span></td>
+            <td>Factorized embedding parameterization and cross-layer weight sharing.</td>
+            <td>12M Parameters (18x parameter reduction)</td>
+            <td>Memory-constrained hardware and embedded devices.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- MODULE 3: GPT (AUTOREGRESSIVE DECODER) -->
+  <div id="tab-gpt" class="tab-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">✍️ GPT: Generative Pre-trained Transformer</div>
+          <div class="card-desc">Autoregressive causal language generation developed by OpenAI (Radford et al., 2018–2023)</div>
+        </div>
+        <p>While BERT is an <strong>Encoder-Only</strong> model designed to understand existing text, <strong>GPT</strong> is a <strong>Decoder-Only</strong> model engineered to generate new text token-by-token. It operates under a strict <strong>Causal Mask</strong>: each token can only attend to previous tokens and itself, never to future tokens.</p>
+
+        <div class="decision-box">
+          <strong>The Causal Masking Invariant:</strong>
+          <p style="font-size:0.86rem; margin-top:4px;">To prevent the model from 'cheating' by looking ahead during training, an upper-triangular mask of \(-\infty\) is added to the attention scores before softmax:
+          $$\text{Mask}_{i, j} = \begin{cases} 0 & \text{if } j \le i \\ -\infty & \text{if } j > i \end{cases}$$
+          Since \(e^{-\infty} = 0\), future token weights become strictly zero!</p>
+        </div>
+
+        <div class="code-box">
+# Minimal Autoregressive Generation with GPT-2
+from transformers import pipeline
+generator = pipeline("text-generation", model="gpt2")
+output = generator("Artificial intelligence will", max_length=15, num_return_sequences=1)
+print(output[0]['generated_text'])
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🎲 Interactive Autoregressive Generation Simulator</div>
+          <div class="card-desc">Control sampling temperature to observe token probability distributions</div>
+        </div>
+        <div class="interactive-panel">
+          <label style="font-weight:700; font-size:0.85rem;">Input Context Prefix:</label>
+          <div style="font-family:'Fira Code', monospace; padding:8px 10px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; margin:6px 0 12px 0;">
+            "The future of deep learning is"
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Sampling Temperature (\(T\)):</span>
+              <span id="temp-val" style="color:var(--primary); font-weight:800;">0.70</span>
+            </div>
+            <input type="range" id="temp-slider" min="0.1" max="2.0" step="0.05" value="0.7">
+          </div>
+
+          <div style="font-size:0.85rem; font-weight:700; margin-bottom:6px;">Next Token Candidates & Softmax Probabilities:</div>
+          <div id="gpt-probs-container" style="display:flex; flex-direction:column; gap:6px;"></div>
+
+          <div id="temp-behavior-box" style="margin-top:12px; font-size:0.83rem; padding:10px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px;"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- FORMULA: GPT OBJECTIVE -->
+    <div class="math-card">
+      <div class="math-title-bar">
+        <div class="math-title">📐 Master Formula: Autoregressive Next-Token Causal Objective</div>
+        <span class="pill-tag pill-pink">Autoregressive Loss</span>
+      </div>
+      <div class="formula-display">
+        $$\mathcal{L}_{GPT}(\theta) = -\sum_{i=1}^{n} \log P(u_i \mid u_{i-k}, \dots, u_{i-1}; \theta)$$
+      </div>
+      <table class="anatomy-table">
+        <thead>
+          <tr>
+            <th style="width: 25%;">Symbol / Term</th>
+            <th style="width: 35%;">Mathematical Definition</th>
+            <th style="width: 40%;">Operational Function in LLM Training</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="term-badge">\(u_i\)</span></td>
+            <td>The ground-truth target token at position \(i\).</td>
+            <td>The next token that the model is tasked with predicting.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">\(u_{i-k}, \dots, u_{i-1}\)</span></td>
+            <td>The preceding context window of up to \(k\) prior tokens.</td>
+            <td>The historical prompt condition informing the prediction.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">\(-\log P(\cdot)\)</span></td>
+            <td>Negative log-likelihood cross-entropy loss.</td>
+            <td>Minimizing this loss maximizes the predicted probability of the true next token occurring in human text.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">\(\text{Temperature } T\)</span></td>
+            <td>Logit scaling factor: \(P(u_i) = \frac{\exp(z_i / T)}{\sum_j \exp(z_j / T)}\).</td>
+            <td>\(T \to 0\) collapses to greedy deterministic selection; higher \(T\) flattens probabilities, generating creative/diverse responses.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- STEP-BY-STEP INTUITIVE & NUMERICAL WALKTHROUGH -->
+      <div class="formula-walkthrough">
+        <div class="walkthrough-header">
+          <span>🧩</span>
+          <span>Step-by-Step Mathematical Walkthrough & Intuitive Mechanics</span>
+        </div>
+
+        <div class="origin-block">
+          <div class="origin-title">🔍 Where Did Everything in the Formula Come From?</div>
+          <div class="origin-list">
+            <div class="origin-item">
+              <span class="origin-badge">\(u_i\)</span>
+              <span><strong>Target Next Token:</strong> The authentic upcoming word in the training corpus that the model must predict.</span>
+            </div>
+            <div class="origin-item">
+              <span class="origin-badge">\(u_{i-k}, \dots, u_{i-1}\)</span>
+              <span><strong>Strict Historical Context:</strong> The preceding \(k\) tokens. Unlike BERT which sees both left and right context, GPT's causal triangular mask strictly forbids attending to future tokens (\(j > i\)), enforcing natural temporal text generation.</span>
+            </div>
+            <div class="origin-item">
+              <span class="origin-badge">\(-\sum \log P(\cdot)\)</span>
+              <span><strong>Cumulative Sequence Loss:</strong> Sum of negative log probabilities across all tokens in the document. Lower loss means the model predicts fluent, coherent, human-like text continuations.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="toy-example-box">
+          <div class="toy-title">🎯 Concrete Numerical Toy Example: Generating "Artificial Intelligence is powerful"</div>
+          <p style="font-size:0.86rem; color:#701a75; line-height:1.5; margin:0;">
+            Let us trace two consecutive autoregressive next-token prediction steps:<br>
+            &bull; <strong>Step A:</strong> Context = <em>"Artificial"</em> &rarr; Target = <em>"Intelligence"</em><br>
+            &bull; <strong>Step B:</strong> Context = <em>"Artificial Intelligence"</em> &rarr; Target = <em>"is"</em>
+          </p>
+        </div>
+
+        <div class="step-flow">
+          <div class="calc-step">
+            <div class="calc-step-title"><span class="step-num-pill">Step 1</span> Predict "Intelligence" Given "Artificial"</div>
+            <div class="calc-step-body">
+              Softmax probability over 50,000 vocab tokens yields \(P(	ext{"Intelligence"}) = 0.85\):
+              <div class="calc-math-box">
+                Loss_A = -ln(0.85) = 0.1625
+              </div>
+            </div>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-title"><span class="step-num-pill">Step 2</span> Predict "is" Given "Artificial Intelligence"</div>
+            <div class="calc-step-body">
+              Next forward pass with appended context yields \(P(	ext{"is"}) = 0.70\):
+              <div class="calc-math-box">
+                Loss_B = -ln(0.70) = 0.3567
+              </div>
+            </div>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-title"><span class="step-num-pill">Step 3</span> Compute Sequence Cross-Entropy & Perplexity</div>
+            <div class="calc-step-body">
+              Average token cross-entropy loss:
+              <div class="calc-math-box">
+                Average Loss = (0.1625 + 0.3567) &divide; 2 = 0.2596<br>
+                Perplexity = e^{0.2596} &asymp; 1.296 (Model is choosing between ~1.3 plausible words!)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="takeaway-box">
+          <strong>💡 The Role of Temperature \(T\):</strong> Logits are scaled as \(z_i / T\) before softmax. When \(T 	o 0.1\) (cold), the highest logit dominates completely (greedy, deterministic factual output). When \(T 	o 1.2\) (warm), the probability distribution flattens, giving lower-ranked tokens a chance to be picked (creative storytelling and diverse brainstorming).
+        </div>
+      </div>
+
+
+      <!-- STEP-BY-STEP INTUITIVE & NUMERICAL WALKTHROUGH -->
+      <div class="formula-walkthrough">
+        <div class="walkthrough-header">
+          <span>🧩</span>
+          <span>Step-by-Step Mathematical Walkthrough & Intuitive Mechanics</span>
+        </div>
+
+        <div class="origin-block">
+          <div class="origin-title">🔍 Where Did Everything in the Formula Come From?</div>
+          <div class="origin-list">
+            <div class="origin-item">
+              <span class="origin-badge">\(	ilde{X}\)</span>
+              <span><strong>Corrupted Sequence:</strong> The input sentence where 15% of tokens are chosen for masking: 80% replaced with <code>[MASK]</code>, 10% replaced with a random vocabulary token, and 10% left unchanged.</span>
+            </div>
+            <div class="origin-item">
+              <span class="origin-badge">\(x_i\)</span>
+              <span><strong>True Ground-Truth Token:</strong> The authentic original word that was masked out.</span>
+            </div>
+            <div class="origin-item">
+              <span class="origin-badge">\(P(x_i \mid 	ilde{X}; 	heta)\)</span>
+              <span><strong>Predicted Probability:</strong> The probability score assigned to the true word \(x_i\) after passing the final Transformer hidden state through a linear classification head and softmax over all 30,522 vocabulary tokens.</span>
+            </div>
+            <div class="origin-item">
+              <span class="origin-badge">\(-\log P(\cdot)\)</span>
+              <span><strong>Cross-Entropy Surprise Penalty:</strong> If the model is 100% confident in the correct word (\(P=1.0\)), \(-\log(1.0) = 0\) (zero penalty). If the model predicts low probability (e.g. \(P=0.01\)), \(-\log(0.01) = 4.6\) (massive penalty!).</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="toy-example-box">
+          <div class="toy-title">🎯 Concrete Numerical Toy Example: "The [MASK] shines bright in the sky"</div>
+          <p style="font-size:0.86rem; color:#701a75; line-height:1.5; margin:0;">
+            Ground truth masked token: \(x_i = 	ext{"sun"}\)<br>
+            The model's final classification layer produces vocabulary logits: <code>["cloud": 1.2, "moon": 2.1, "sun": 4.5, "apple": -1.0]</code>
+          </p>
+        </div>
+
+        <div class="step-flow">
+          <div class="calc-step">
+            <div class="calc-step-title"><span class="step-num-pill">Step 1</span> Calculate Softmax Probability for True Word</div>
+            <div class="calc-step-body">
+              Exponentiate logits: \(e^{1.2} pprox 3.32\), \(e^{2.1} pprox 8.17\), \(e^{4.5} pprox 90.02\), \(e^{-1.0} pprox 0.37\) (Sum \(pprox 101.88\)):
+              <div class="calc-math-box">
+                P("sun") = 90.02 &divide; 101.88 = 0.8836 (88.36% probability)
+              </div>
+            </div>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-title"><span class="step-num-pill">Step 2</span> Compute Negative Log-Likelihood Loss</div>
+            <div class="calc-step-body">
+              Compute the cross-entropy loss:
+              <div class="calc-math-box">
+                Loss = -ln(0.8836) = 0.1237
+              </div>
+              <strong>Contrast Case:</strong> If the model had assigned only 5% probability to "sun" (\(P=0.05\)), the loss would spike to \(-\ln(0.05) = 2.9957\) (over 24x higher!).
+            </div>
+          </div>
+        </div>
+
+        <div class="takeaway-box">
+          <strong>💡 Why the 80/10/10 Rule Matters:</strong> If BERT only saw <code>[MASK]</code> during pretraining, it would learn representations that strictly depend on the <code>[MASK]</code> token. But in real downstream fine-tuning tasks, <code>[MASK]</code> never appears! The 10% random and 10% unchanged tokens force the model to continuously maintain authentic contextual representations for every single position!
+        </div>
+      </div>
+
+    </div>
+
+    <!-- SCALING LAWS -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">📈 Neural Scaling Laws & Emergent Abilities</div>
+        <div class="card-desc">Kaplan et al. (2020) and Chinchilla (Hoffmann et al., 2022) discoveries</div>
+      </div>
+      <div class="grid-2">
+        <div style="font-size:0.88rem; color:var(--text-main);">
+          <strong>Power-Law Predictability:</strong>
+          <p style="margin-top:6px; color:var(--text-muted);">
+            Loss scales as a predictable power law with parameter count \(N\), dataset size \(D\), and compute budget \(C\):
+            $$L(N, D) \approx \left(\frac{N_c}{N}\right)^{\alpha_N} + \left(\frac{D_c}{D}\right)^{\alpha_D}$$
+            Increasing parameters and tokens predictably reduces cross-entropy loss across orders of magnitude!
+          </p>
+        </div>
+        <div style="font-size:0.88rem; color:var(--text-main);">
+          <strong>Emergent Abilities:</strong>
+          <p style="margin-top:6px; color:var(--text-muted);">
+            Abilities not present in smaller models (multi-step arithmetic, symbolic code debugging, theory of mind) spontaneously emerge beyond critical parameter thresholds (~10B to 70B parameters) when trained on high-token budgets.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 4: HEAD-TO-HEAD COMPARISON & DECISION TREE -->
+  <div id="tab-compare" class="tab-content">
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">⚔️ Master Architectural Comparison: BERT vs. GPT</div>
+        <div class="card-desc">Detailed side-by-side technical trade-off matrix</div>
+      </div>
+      <table class="anatomy-table">
+        <thead>
+          <tr>
+            <th style="width: 20%;">Architectural Dimension</th>
+            <th style="width: 40%; background: #eff6ff; color:#1e40af;">🔍 BERT (Google)</th>
+            <th style="width: 40%; background: #faf5ff; color:#6b21a8;">✍️ GPT (OpenAI)</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="term-badge">Architecture Paradigm</span></td>
+            <td><strong>Encoder-Only</strong> (Vaswani Encoder stack)</td>
+            <td><strong>Decoder-Only</strong> (Vaswani Decoder stack without cross-attention)</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">Attention Mechanism</span></td>
+            <td><strong>Full Bidirectional Attention</strong> (every token attends to left & right)</td>
+            <td><strong>Causal Masked Attention</strong> (tokens attend only to past & present)</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">Pre-Training Objective</span></td>
+            <td>Masked Language Model (MLM) + Next Sentence Prediction (NSP)</td>
+            <td>Autoregressive Next-Token Prediction (Causal Language Modeling)</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">Optimal Downstream Use Cases</span></td>
+            <td><strong>Understanding & Extraction:</strong> Classification, NER, Sentiment, Clause Extraction, Semantic Search Embeddings.</td>
+            <td><strong>Generation & Reasoning:</strong> Creative writing, Code generation, Dialogue/Chatbots, Multi-step reasoning.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">Generation Capability</span></td>
+            <td>Poor / Inefficient (requires iterative unmasking)</td>
+            <td>State-of-the-Art (fluent, continuous generative decoding)</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">Fine-Tuning Paradigm</span></td>
+            <td>Task-specific head fine-tuning on domain data</td>
+            <td>In-Context Learning (Prompting) or PEFT / LoRA fine-tuning</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ARCHITECT DECISION SIMULATOR -->
+    <div class="card">
+      <div class="card-header">
+        <div class="card-title">🧭 The Senior Architect's Model Selection Matrix</div>
+        <div class="card-desc">Click any enterprise business requirement to see the recommended architecture</div>
+      </div>
+      <div class="interactive-panel">
+        <label style="font-weight:700; font-size:0.85rem;">Select Your Industrial Task:</label>
+        <div style="display:flex; flex-wrap:wrap; gap:8px; margin:8px 0 14px 0;">
+          <button class="task-chip active" data-task="sentiment" style="padding:6px 12px; border-radius:6px; border:1px solid #cbd5e1; background:#ffffff; font-weight:600; cursor:pointer;">📊 Customer Review Sentiment</button>
+          <button class="task-chip" data-task="chatbot" style="padding:6px 12px; border-radius:6px; border:1px solid #cbd5e1; background:#ffffff; font-weight:600; cursor:pointer;">💬 Conversational Chatbot</button>
+          <button class="task-chip" data-task="legal" style="padding:6px 12px; border-radius:6px; border:1px solid #cbd5e1; background:#ffffff; font-weight:600; cursor:pointer;">📑 Legal Contract Clause Extraction</button>
+          <button class="task-chip" data-task="codegen" style="padding:6px 12px; border-radius:6px; border:1px solid #cbd5e1; background:#ffffff; font-weight:600; cursor:pointer;">💻 Python Code Autocomplete</button>
+          <button class="task-chip" data-task="search" style="padding:6px 12px; border-radius:6px; border:1px solid #cbd5e1; background:#ffffff; font-weight:600; cursor:pointer;">🔍 Dense Semantic Search (RAG)</button>
+        </div>
+
+        <div id="decision-result-card" style="background:#ffffff; border:1.5px solid #c7d2fe; border-radius:8px; padding:16px;"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- MODULE 5: FINE-TUNING & LORA (PEFT) -->
+  <div id="tab-lora" class="tab-content">
+    <div class="grid-2">
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🚀 Parameter-Efficient Fine-Tuning (PEFT) & LoRA</div>
+          <div class="card-desc">Adapting 70B LLMs without retraining billions of weights (Hu et al., Microsoft 2021)</div>
+        </div>
+        <p>Full fine-tuning of modern foundation models requires updating hundreds of gigabytes of weights, demanding massive clusters of 80GB H100 GPUs. <strong>LoRA (Low-Rank Adaptation)</strong> freezes the pre-trained model weights <span class="math-pill">\(W_0\)</span> and injects small, trainable rank decomposition matrices into each Transformer layer.</p>
+
+        <div class="decision-box">
+          <strong>Key Mathematical Principle:</strong>
+          <p style="font-size:0.86rem; margin-top:4px;">Weight updates \(\Delta W\) have a very low intrinsic rank! Instead of training \(d \times k\) parameters, we factorize:
+          $$\Delta W = B \times A \quad \text{where } B \in \mathbb{R}^{d \times r}, \; A \in \mathbb{R}^{r \times k}, \; r \ll \min(d, k)$$
+          For a \(4096 \times 4096\) weight matrix and rank \(r=8\), parameters drop from <strong>16,777,216 to 65,536 (99.6% reduction)!</strong></p>
+        </div>
+
+        <div class="code-box">
+# Minimal LoRA Adapter in PyTorch
+class LoRALayer(nn.Module):
+    def __init__(self, in_dim, out_dim, rank=8, alpha=16):
+        super().__init__()
+        self.A = nn.Parameter(torch.randn(rank, in_dim) * 0.01)
+        self.B = nn.Parameter(torch.zeros(out_dim, rank))
+        self.scaling = alpha / rank
+    def forward(self, x):
+        return (x @ self.A.T @ self.B.T) * self.scaling
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-header">
+          <div class="card-title">🧮 Interactive LoRA Parameter Reduction Calculator</div>
+          <div class="card-desc">Dynamically compute memory and weight savings by adjusting model dimension and rank</div>
+        </div>
+        <div class="interactive-panel">
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>Model Hidden Dimension (\(d\)):</span>
+              <span id="lora-d-val" style="color:var(--primary); font-weight:800;">4096</span>
+            </div>
+            <input type="range" id="lora-d-slider" min="768" max="8192" step="256" value="4096">
+          </div>
+
+          <div class="slider-group">
+            <div class="slider-label">
+              <span>LoRA Rank (\(r\)):</span>
+              <span id="lora-r-val" style="color:var(--primary); font-weight:800;">8</span>
+            </div>
+            <input type="range" id="lora-r-slider" min="1" max="64" step="1" value="8">
+          </div>
+
+          <div style="background:#ffffff; border:1px solid #c7d2fe; border-radius:8px; padding:14px; margin-top:14px;">
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+              <span style="font-size:0.85rem; color:var(--text-muted);">Full Matrix Parameters (\(d \times d\)):</span>
+              <strong id="lora-full-params" style="font-family:'Fira Code', monospace;">16,777,216</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+              <span style="font-size:0.85rem; color:var(--text-muted);">LoRA Parameters (\(2 \times d \times r\)):</span>
+              <strong id="lora-adapter-params" style="font-family:'Fira Code', monospace; color:var(--primary);">65,536</strong>
+            </div>
+            <div style="display:flex; justify-content:space-between; border-top:1px solid #e2e8f0; padding-top:8px;">
+              <span style="font-size:0.85rem; font-weight:700;">Storage Reduction Ratio:</span>
+              <strong id="lora-reduction-pct" style="font-size:1.1rem; color:#16a34a;">99.61% Less Memory!</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- LORA FORMULA CARD -->
+    <div class="math-card">
+      <div class="math-title-bar">
+        <div class="math-title">📐 Master Formula: LoRA Forward Pass & Low-Rank Decomposition</div>
+        <span class="pill-tag pill-yellow">PEFT Mathematics</span>
+      </div>
+      <div class="formula-display">
+        $$h = W_0 x + \Delta W x = W_0 x + \frac{\alpha}{r} (B A) x$$
+      </div>
+      <table class="anatomy-table">
+        <thead>
+          <tr>
+            <th style="width: 22%;">Term / Symbol</th>
+            <th style="width: 35%;">Dimension & Definition</th>
+            <th style="width: 43%;">Operational Significance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><span class="term-badge">\(W_0 \in \mathbb{R}^{d \times k}\)</span></td>
+            <td>Frozen base pretrained weight tensor.</td>
+            <td><strong>Zero Gradient Computation:</strong> Remains completely frozen, saving backward pass activation memory and preserving base knowledge.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">\(B \in \mathbb{R}^{d \times r}\)</span></td>
+            <td>Trainable low-rank matrix initialized to all zeros.</td>
+            <td>Ensures \(\Delta W = B \times A = 0\) at the very start of training, so model output is initially identical to base model.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">\(A \in \mathbb{R}^{r \times k}\)</span></td>
+            <td>Trainable low-rank matrix initialized with Gaussian \(\mathcal{N}(0, \sigma^2)\).</td>
+            <td>Compresses the input representation into a compact \(r\)-dimensional bottleneck subspace.</td>
+          </tr>
+          <tr>
+            <td><span class="term-badge">\(\frac{\alpha}{r}\)</span></td>
+            <td>Constant scaling factor with hyperparameter \(\alpha\).</td>
+            <td>Stabilizes optimization when varying rank \(r\), eliminating the need to retune learning rates when rank changes.</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- STEP-BY-STEP INTUITIVE & NUMERICAL WALKTHROUGH -->
+      <div class="formula-walkthrough">
+        <div class="walkthrough-header">
+          <span>🧩</span>
+          <span>Step-by-Step Mathematical Walkthrough & Intuitive Mechanics</span>
+        </div>
+
+        <div class="origin-block">
+          <div class="origin-title">🔍 Where Did Everything in the Formula Come From?</div>
+          <div class="origin-list">
+            <div class="origin-item">
+              <span class="origin-badge">\(W_0 \in \mathbb{R}^{d 	imes k}\)</span>
+              <span><strong>Frozen Pre-Trained Foundation Weights:</strong> The massive base model weight table (e.g. \(4096 	imes 4096 = 16.7	ext{M}\) parameters per layer). Frozen solid: zero gradient backprop, zero optimizer states, zero risk of catastrophic forgetting.</span>
+            </div>
+            <div class="origin-item">
+              <span class="origin-badge">\(A \in \mathbb{R}^{r 	imes k}\)</span>
+              <span><strong>Trainable Down-Projection Bottleneck:</strong> Initialized with Gaussian random noise \(\mathcal{N}(0, \sigma^2)\). Compresses full input dimension \(k\) down to a tiny intrinsic rank \(r\) (e.g. \(r=8\) or \(r=16\)).</span>
+            </div>
+            <div class="origin-item">
+              <span class="origin-badge">\(B \in \mathbb{R}^{d 	imes r}\)</span>
+              <span><strong>Trainable Up-Projection Expansion:</strong> Initialized to ALL ZEROS. Expands the rank-\(r\) bottleneck back up to full output dimension \(d\). Because \(B=0\) at step 0, \(\Delta W = B 	imes A = 0\), guaranteeing the model starts identically to the base pretrained model!</span>
+            </div>
+            <div class="origin-item">
+              <span class="origin-badge">\(rac{lpha}{r}\)</span>
+              <span><strong>Scaling Constant:</strong> Hyperparameter constant (typically \(lpha = 2r\)). Stabilizes gradient optimization when experimenting with different rank values \(r\), avoiding the need to retune learning rates.</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="toy-example-box">
+          <div class="toy-title">🎯 Concrete Numerical Toy Example: \(d=2, k=2\), Rank \(r=1\), and \(lpha=1\) (\(lpha/r = 1.0\))</div>
+          <p style="font-size:0.86rem; color:#701a75; line-height:1.5; margin:0;">
+            Input token activation vector: \(x = [2, 3]\)<br>
+            Frozen base weights: \(W_0 = egin{bmatrix} 1 & 0 \ 0 & 1 \end{bmatrix}\) (Identity matrix)<br>
+            Trainable low-rank adapter matrices:<br>
+            &bull; Down-matrix \(A = [1, 2]\) (Dimension \(1 	imes 2\), compresses 2D down to rank \(r=1\))<br>
+            &bull; Up-matrix \(B = egin{bmatrix} 0.5 \ 0.5 \end{bmatrix}\) (Dimension \(2 	imes 1\), expands rank \(r=1\) back to 2D)
+          </p>
+        </div>
+
+        <div class="step-flow">
+          <div class="calc-step">
+            <div class="calc-step-title"><span class="step-num-pill">Step 1</span> Compute Base Model Forward Path (\(W_0 x\))</div>
+            <div class="calc-step-body">
+              Pass input through frozen base weights without computing any gradients:
+              <div class="calc-math-box">
+                W_0 x = [[1, 0], [0, 1]] &times; [2, 3]^T = [2, 3]
+              </div>
+            </div>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-title"><span class="step-num-pill">Step 2</span> Compress Through Bottleneck Adapter (\(A x\))</div>
+            <div class="calc-step-body">
+              Project input into the compact \(r=1\) subspace:
+              <div class="calc-math-box">
+                A x = (1 &times; 2) + (2 &times; 3) = 2 + 6 = 8 (A single scalar number!)
+              </div>
+            </div>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-title"><span class="step-num-pill">Step 3</span> Expand Bottleneck Back to Full Dimension (\(B 	imes (Ax)\))</div>
+            <div class="calc-step-body">
+              Multiply compressed scalar by up-projection matrix \(B\):
+              <div class="calc-math-box">
+                B &times; 8 = [0.5 &times; 8, 0.5 &times; 8]^T = [4, 4]
+              </div>
+            </div>
+          </div>
+
+          <div class="calc-step">
+            <div class="calc-step-title"><span class="step-num-pill">Step 4</span> Scale & Sum with Base Model Path</div>
+            <div class="calc-step-body">
+              Scale by \(lpha / r = 1.0\) and add adapter delta to base output:
+              <div class="calc-math-box">
+                Final Output h = W_0 x + (&alpha;/r)(B A x) = [2, 3] + [4, 4] = [6, 7]
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="takeaway-box">
+          <strong>💡 Production Magic (Zero Serving Latency):</strong> In full fine-tuning, storing weights + gradients + Adam momentum for a 70B model requires over 800GB of VRAM! LoRA only trains \(A\) and \(B\) (reducing parameters by &gt;99%). When deployment time arrives, we compute \(\Delta W = rac{lpha}{r}(B 	imes A)\) once, add it directly into \(W_0\) permanently (\(W_{	ext{deploy}} = W_0 + \Delta W\)), and discard the adapter branches entirely — yielding <strong>ZERO extra inference latency</strong>!
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+</div>
+
+<!-- SCRIPT LOGIC -->
+<script>
+// Universal Math Rendering Pipeline (KaTeX Auto-Render + MathJax Fallback)
+function triggerMathTypeset() {
+  if (window.renderMathInElement) {
+    try {
+      renderMathInElement(document.body, {
+        delimiters: [
+          {left: '$$', right: '$$', display: true},
+          {left: '$', right: '$', display: false},
+          {left: '\\(', right: '\\)', display: false},
+          {left: '\\[', right: '\\]', display: true}
+        ],
+        throwOnError: false
+      });
+    } catch(err) {
+      console.warn('KaTeX auto-render error:', err);
+    }
+  }
+  if (window.MathJax && window.MathJax.typesetPromise) {
+    try {
+      window.MathJax.typesetPromise().catch(function(err) {
+        console.warn('MathJax typeset error:', err);
+      });
+    } catch(e) {}
+  }
+}
+
+window.addEventListener('DOMContentLoaded', () => setTimeout(triggerMathTypeset, 50));
+window.addEventListener('load', () => setTimeout(triggerMathTypeset, 150));
+
+// Tab Switching
+document.querySelectorAll('.nav-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+    btn.classList.add('active');
+    const target = document.getElementById(btn.dataset.tab);
+    if (target) {
+      target.classList.add('active');
+      triggerMathTypeset();
+    }
+  });
+});
+
+// Module 1: Attention Heatmap Simulation Data
+const attnData = {
+  bank_river: {
+    target: "bank",
+    tokens: ["The", "bank", "of", "the", "river", "was", "steep", "muddy"],
+    weights: [0.03, 0.12, 0.05, 0.04, 0.48, 0.06, 0.14, 0.08],
+    explanation: "Notice the massive attention weight (48%) directed toward 'river' and 'steep'! The attention mechanism successfully disambiguates 'bank' as a geological embankment rather than a financial institution."
+  },
+  bank_money: {
+    target: "bank",
+    tokens: ["The", "bank", "gave", "a", "business", "loan", "to", "startup"],
+    weights: [0.02, 0.10, 0.08, 0.02, 0.28, 0.42, 0.03, 0.05],
+    explanation: "Here 'bank' strongly attends to 'loan' (42%) and 'business' (28%). The dot product of their Query and Key projections produces high positive values, establishing financial context."
+  },
+  apple_tech: {
+    target: "Apple",
+    tokens: ["Apple", "announced", "a", "powerful", "neural", "processor"],
+    weights: [0.12, 0.08, 0.02, 0.14, 0.38, 0.26],
+    explanation: "'Apple' attends heavily to 'neural' (38%) and 'processor' (26%). It recognizes Apple as a technology corporation rather than a botanical fruit."
+  },
+  apple_fruit: {
+    target: "apple",
+    tokens: ["The", "red", "apple", "fell", "from", "the", "tall", "tree"],
+    weights: [0.03, 0.22, 0.10, 0.12, 0.04, 0.03, 0.08, 0.38],
+    explanation: "'apple' attends heavily to 'tree' (38%) and 'red' (22%), correctly mapping semantic features to agricultural fruit context."
+  }
+};
+
+const sentenceSelect = document.getElementById('attn-sentence-select');
+const barsContainer = document.getElementById('attention-bars');
+const attnExpl = document.getElementById('attn-explanation');
+const targetLabel = document.getElementById('target-word-label');
+
+function renderAttention() {
+  const item = attnData[sentenceSelect.value];
+  targetLabel.innerText = `"${item.target}"`;
+  barsContainer.innerHTML = '';
+  item.tokens.forEach((tok, idx) => {
+    const w = item.weights[idx];
+    const pct = Math.round(w * 100);
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.alignItems = 'center';
+    row.style.gap = '8px';
+    row.style.fontSize = '0.82rem';
+
+    row.innerHTML = `
+      <span style="width: 70px; font-family:'Fira Code', monospace; font-weight:700;">${tok}</span>
+      <div style="flex:1; background:#e2e8f0; height:18px; border-radius:4px; overflow:hidden;">
+        <div style="width:${pct}%; height:100%; background:linear-gradient(90deg, #6366f1, #4f46e5); transition:width 0.3s ease;"></div>
+      </div>
+      <span style="width: 35px; text-align:right; font-weight:700; color:#4338ca;">${pct}%</span>
+    `;
+    barsContainer.appendChild(row);
+  });
+  attnExpl.innerText = item.explanation;
+}
+
+sentenceSelect.addEventListener('change', renderAttention);
+renderAttention();
+
+// Module 2: BERT Interactive Tokenizer
+const inputA = document.getElementById('bert-input-a');
+const inputB = document.getElementById('bert-input-b');
+const btnTok = document.getElementById('btn-tokenize');
+const tokensDisplay = document.getElementById('bert-tokens-display');
+const metaDisplay = document.getElementById('bert-meta-display');
+
+function tokenizeBert() {
+  const wordsA = inputA.value.trim().split(/\s+/).filter(w => w.length > 0);
+  const wordsB = inputB.value.trim().split(/\s+/).filter(w => w.length > 0);
+
+  tokensDisplay.innerHTML = '';
+  let fullSeq = [{ tok: '[CLS]', type: 'cls', seg: 0, pos: 0 }];
+  let pos = 1;
+
+  wordsA.forEach(w => {
+    fullSeq.push({ tok: w, type: 'word', seg: 0, pos: pos++ });
+  });
+
+  fullSeq.push({ tok: '[SEP]', type: 'sep', seg: 0, pos: pos++ });
+
+  if (wordsB.length > 0) {
+    wordsB.forEach(w => {
+      fullSeq.push({ tok: w, type: 'word', seg: 1, pos: pos++ });
+    });
+    fullSeq.push({ tok: '[SEP]', type: 'sep', seg: 1, pos: pos++ });
+  }
+
+  fullSeq.forEach(item => {
+    const chip = document.createElement('span');
+    chip.className = `tok-chip tok-${item.type}`;
+    chip.innerHTML = `${item.tok} <sub style="opacity:0.75; font-size:9px;">pos:${item.pos} | seg:${item.seg}</sub>`;
+    tokensDisplay.appendChild(chip);
+  });
+
+  metaDisplay.innerHTML = `
+    <strong>Token Count:</strong> ${fullSeq.length} tokens &nbsp;|&nbsp;
+    <strong>Segment A Tokens:</strong> ${wordsA.length + 2} &nbsp;|&nbsp;
+    <strong>Segment B Tokens:</strong> ${wordsB.length > 0 ? wordsB.length + 1 : 0} &nbsp;|&nbsp;
+    <strong>[CLS] Representation:</strong> Ready for sequence classification pooling!
+  `;
+}
+
+btnTok.addEventListener('click', tokenizeBert);
+tokenizeBert();
+
+// Module 3: GPT Temperature Simulation
+const tempSlider = document.getElementById('temp-slider');
+const tempVal = document.getElementById('temp-val');
+const gptProbs = document.getElementById('gpt-probs-container');
+const tempBehaviorBox = document.getElementById('temp-behavior-box');
+
+const baseLogits = [
+  { word: "promising", logit: 3.8 },
+  { word: "exponential", logit: 3.2 },
+  { word: "transformative", logit: 2.9 },
+  { word: "uncertain", logit: 1.5 },
+  { word: "apocalyptic", logit: 0.4 }
+];
+
+function updateGptProbs() {
+  const T = parseFloat(tempSlider.value);
+  tempVal.innerText = T.toFixed(2);
+
+  // Scaled softmax
+  const exps = baseLogits.map(b => Math.exp(b.logit / T));
+  const sumExp = exps.reduce((acc, v) => acc + v, 0);
+  const probs = exps.map(v => v / sumExp);
+
+  gptProbs.innerHTML = '';
+  baseLogits.forEach((item, idx) => {
+    const p = Math.round(probs[idx] * 100);
+    const row = document.createElement('div');
+    row.style.display = 'flex';
+    row.style.alignItems = 'center';
+    row.style.gap = '8px';
+    row.style.fontSize = '0.82rem';
+
+    row.innerHTML = `
+      <span style="width: 100px; font-family:'Fira Code', monospace; font-weight:700;">"${item.word}"</span>
+      <div style="flex:1; background:#e2e8f0; height:18px; border-radius:4px; overflow:hidden;">
+        <div style="width:${p}%; height:100%; background:linear-gradient(90deg, #ec4899, #db2777); transition:width 0.2s ease;"></div>
+      </div>
+      <span style="width: 35px; text-align:right; font-weight:700; color:#9d174d;">${p}%</span>
+    `;
+    gptProbs.appendChild(row);
+  });
+
+  if (T < 0.4) {
+    tempBehaviorBox.style.background = '#eff6ff';
+    tempBehaviorBox.style.color = '#1e40af';
+    tempBehaviorBox.innerText = '❄️ Low Temperature (Near Greedy): Model behaves deterministically, choosing the top logit ("promising") with overwhelming certainty. Ideal for factual Q&A and code generation.';
+  } else if (T <= 1.0) {
+    tempBehaviorBox.style.background = '#f0fdf4';
+    tempBehaviorBox.style.color = '#166534';
+    tempBehaviorBox.innerText = '🎯 Balanced Temperature (Default 0.7 - 1.0): Balanced diversity and coherence. High probability tokens remain favored while allowing plausible synonyms.';
+  } else {
+    tempBehaviorBox.style.background = '#fff1f2';
+    tempBehaviorBox.style.color = '#9f1239';
+    tempBehaviorBox.innerText = '🔥 High Temperature (> 1.2): Softmax distribution flattens! Rare and hallucinated tokens gain significant probability, leading to highly creative or nonsensical outputs.';
+  }
+}
+
+tempSlider.addEventListener('input', updateGptProbs);
+updateGptProbs();
+
+// Module 4: Architect Decision Simulator
+const taskData = {
+  sentiment: {
+    rec: "BERT (or RoBERTa / DistilBERT)",
+    type: "Encoder-Only Architecture",
+    why: "Full bidirectional context allows BERT to see entire sentences holistically. Sarcasm, double negatives ('not bad at all'), and subtle sentiment cues require looking in both directions.",
+    deploy: "DistilBERT for <10ms edge inference or RoBERTa-Base for maximum F1 accuracy."
+  },
+  chatbot: {
+    rec: "GPT (Decoder-Only LLM)",
+    type: "Autoregressive Architecture",
+    why: "Conversational agents require continuous autoregressive token generation. Decoder-only models generate fluent, multi-turn responses without latency bottlenecks.",
+    deploy: "GPT-4o or fine-tuned LLaMA-3 with Instruction Tuning & RLHF."
+  },
+  legal: {
+    rec: "BERT (LegalBERT / RoBERTa)",
+    type: "Encoder-Only Token Extraction",
+    why: "Extracting contract indemnity clauses, named entities, and liability dates requires token-level classification heads without risk of generative hallucinations.",
+    deploy: "BERT-Large with a sequence labeling classification head."
+  },
+  codegen: {
+    rec: "GPT (CodeGen / StarCoder / Claude)",
+    type: "Autoregressive Code Completion",
+    why: "Writing code requires step-by-step causal syntax prediction where each line builds logically upon previous declarations and imports.",
+    deploy: "Autoregressive 7B-34B decoder model fine-tuned on code repositories."
+  },
+  search: {
+    rec: "BERT-based Bi-Encoder (Dense Embeddings)",
+    type: "Dual-Encoder Representation",
+    why: "Generating dense mathematical vector embeddings for vector databases (Chroma, Pinecone, FAISS) requires pooled holistic document vectors, where BERT excels.",
+    deploy: "BGE-Large or E5-v2 embeddings model."
+  }
+};
+
+const taskChips = document.querySelectorAll('.task-chip');
+const decCard = document.getElementById('decision-result-card');
+
+function showDecision(taskKey) {
+  const d = taskData[taskKey];
+  decCard.innerHTML = `
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+      <h3 style="color:var(--primary); font-size:1.1rem;">Recommended: ${d.rec}</h3>
+      <span class="pill-tag pill-blue">${d.type}</span>
+    </div>
+    <p style="font-size:0.88rem; margin-bottom:8px; color:var(--text-main);"><strong>Architectural Rationale:</strong> ${d.why}</p>
+    <div style="font-size:0.84rem; background:#f8fafc; padding:8px 12px; border-radius:6px; border:1px solid #e2e8f0; color:#334155;">
+      <strong>Production Blueprint:</strong> ${d.deploy}
+    </div>
+  `;
+}
+
+taskChips.forEach(chip => {
+  chip.addEventListener('click', () => {
+    taskChips.forEach(c => c.classList.remove('active'));
+    chip.classList.add('active');
+    chip.style.borderColor = 'var(--primary)';
+    showDecision(chip.dataset.task);
+  });
+});
+showDecision('sentiment');
+
+// Module 5: LoRA Calculator
+const dSlider = document.getElementById('lora-d-slider');
+const rSlider = document.getElementById('lora-r-slider');
+const dVal = document.getElementById('lora-d-val');
+const rVal = document.getElementById('lora-r-val');
+const fullParamsEl = document.getElementById('lora-full-params');
+const adapterParamsEl = document.getElementById('lora-adapter-params');
+const reductionEl = document.getElementById('lora-reduction-pct');
+
+function updateLoraCalc() {
+  const d = parseInt(dSlider.value);
+  const r = parseInt(rSlider.value);
+  dVal.innerText = d.toLocaleString();
+  rVal.innerText = r.toString();
+
+  const full = d * d;
+  const lora = 2 * d * r;
+  const reduction = ((1 - (lora / full)) * 100).toFixed(2);
+
+  fullParamsEl.innerText = full.toLocaleString();
+  adapterParamsEl.innerText = lora.toLocaleString();
+  reductionEl.innerText = `${reduction}% Less Memory!`;
+}
+
+dSlider.addEventListener('input', updateLoraCalc);
+rSlider.addEventListener('input', updateLoraCalc);
+updateLoraCalc();
+</script>
+
+</body>
+</html>
